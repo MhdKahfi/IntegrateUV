@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IntegrateUV— Simulator Kalkulus Integral UV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; transition: background 0.3s, color 0.3s; }
+
+    .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      height: 6px; border-radius: 99px;
+      background: #e5e7eb; outline: none; cursor: pointer;
+    }
+    [data-theme="dark"] input[type=range] { background: #374151; }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer; transition: transform .1s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    input[type=range]::-moz-range-thumb {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      border: 2px solid white; cursor: pointer;
+    }
+
+    .nav-link { transition: all .2s; }
+    .nav-link.active {
+      background: linear-gradient(135deg, #f97316, #ef4444) !important;
+      color: white !important;
+      box-shadow: 0 4px 15px rgba(249,115,22,0.4);
+    }
+
+    .skin-btn { transition: all .2s; }
+    .skin-btn.selected {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+      border: 2px solid #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+    }
+    [data-theme="dark"] .skin-btn.selected {
+      background: linear-gradient(135deg, #064e3b, #065f46) !important;
+    }
+
+    .brand-btn { transition: all .2s; }
+    .brand-btn.selected {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+      border-color: #3b82f6 !important;
+      color: #1d4ed8 !important;
+    }
+    [data-theme="dark"] .brand-btn.selected {
+      background: linear-gradient(135deg, #1e3a5f, #1e40af) !important;
+      color: #93c5fd !important;
+    }
+
+    section { animation: fadeUp .3s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .prog-fill { transition: width .5s ease, background .4s; }
+
+    [data-theme="dark"] select,
+    [data-theme="dark"] input[type=number],
+    [data-theme="dark"] input[type=text] {
+      background: #374151; color: #f9fafb; border-color: #4b5563;
+    }
+
+    .text-justify { text-align: justify; hyphens: auto; }
+
+    #trapDetail {
+      font-size: 13px;
+    }
+    #trapDetail table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 4px;
+    }
+    #trapDetail thead th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      font-family: 'Courier New', monospace;
+    }
+    #trapDetail tbody tr {
+      transition: background 0.15s;
+    }
+    #trapDetail tbody tr:hover td {
+      background: rgba(99,102,241,0.08) !important;
+    }
+    #trapDetail tbody td {
+      padding: 7px 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border-top: 1px solid transparent;
+    }
+    #trapDetail tbody td:first-child { border-radius: 8px 0 0 8px; }
+    #trapDetail tbody td:last-child  { border-radius: 0 8px 8px 0; }
+    .trap-scroll { max-height: 260px; overflow-y: auto; }
+    .trap-scroll::-webkit-scrollbar { width: 5px; }
+    .trap-scroll::-webkit-scrollbar-track { background: transparent; }
+    .trap-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9px; }
+    [data-theme="dark"] .trap-scroll::-webkit-scrollbar-thumb { background: #4b5563; }
+
+    @media (max-width: 768px) {
+      .mobile-nav { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+      .mobile-nav::-webkit-scrollbar { height: 3px; }
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
+
+<!-- ══ NAVBAR ══ -->
+<nav class="glass bg-white/80 dark:bg-gray-800/80 sticky top-0 z-50 border-b border-orange-200 dark:border-gray-700 shadow-lg">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-9 h-9 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-md">
+          <i class="fas fa-sun text-white text-sm"></i>
+        </div>
+        <span class="text-xl font-black bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent tracking-tight">IntegrateUV</span>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-1">
+        <button onclick="showSection('home')"      class="nav-link active px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-gray-700">Home</button>
+        <button onclick="showSection('about')"     class="nav-link px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-gray-700">Apa itu Sunscreen?</button>
+        <button onclick="showSection('spf')"       class="nav-link px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-gray-700">Cara Kerja SPF</button>
+        <button onclick="showSection('simulator')" class="nav-link px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-gray-700">🧮 Simulator</button>
+        <button onclick="showSection('tips')"      class="nav-link px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-gray-700">Tips Pakai</button>
+      </div>
+
+      <button onclick="toggleTheme()" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-all">
+        <i class="fas fa-moon dark:hidden"></i>
+        <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+      </button>
+    </div>
+    <!-- Mobile nav -->
+    <div class="mobile-nav md:hidden pb-3">
+      <button onclick="showSection('home')"      class="nav-link flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 bg-white/60 dark:bg-gray-700/60 border border-orange-200 dark:border-gray-600">Home</button>
+      <button onclick="showSection('about')"     class="nav-link flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 bg-white/60 dark:bg-gray-700/60 border border-orange-200 dark:border-gray-600">Sunscreen?</button>
+      <button onclick="showSection('spf')"       class="nav-link flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 bg-white/60 dark:bg-gray-700/60 border border-orange-200 dark:border-gray-600">SPF</button>
+      <button onclick="showSection('simulator')" class="nav-link flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 bg-white/60 dark:bg-gray-700/60 border border-orange-200 dark:border-gray-600">🧮 Simulator</button>
+      <button onclick="showSection('tips')"      class="nav-link flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 bg-white/60 dark:bg-gray-700/60 border border-orange-200 dark:border-gray-600">Tips</button>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+<!-- ══ HOME ══ -->
+<section id="home" class="min-h-screen flex flex-col justify-center">
+  <div class="text-center">
+    <div class="w-32 h-32 bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl mx-auto mb-8 shadow-2xl flex items-center justify-center">
+      <i class="fas fa-shield text-5xl text-white"></i>
+    </div>
+    <h1 class="text-5xl md:text-7xl font-black bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent mb-6 leading-tight">
+      Lindungi Kulitmu<br>
+      <span class="text-4xl md:text-5xl">dari Sinar UV</span>
+    </h1>
+    <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-12 leading-relaxed">
+      Sunscreen bukan hanya pelindung, tapi perhitungan matematis presisi.<br>
+      Gunakan simulator kami berbasis <strong class="text-orange-500">kalkulus integral</strong>!
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button onclick="showSection('simulator')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-5 rounded-3xl text-xl font-bold shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
+        <i class="fas fa-calculator mr-2"></i>Coba Simulator
+      </button>
+      <button onclick="showSection('about')" class="border-4 border-orange-400 text-orange-600 dark:text-orange-400 px-12 py-5 rounded-3xl text-xl font-bold hover:bg-orange-50 dark:hover:bg-gray-800 transition-all">
+        Pelajari Lebih Lanjut
+      </button>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 mt-20 text-left">
+      <div class="bg-white/70 dark:bg-gray-800/70 glass rounded-3xl p-6 shadow-lg border border-orange-100 dark:border-gray-700">
+        <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-400 rounded-2xl flex items-center justify-center mb-4">
+          <i class="fas fa-wave-square text-white text-lg"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">Integral Trapesium</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">D(T) = ∫₀ᵀ I₀(t)·e<sup>−k·x</sup> dt dihitung dengan metode trapesium komposit.</p>
+      </div>
+      <div class="bg-white/70 dark:bg-gray-800/70 glass rounded-3xl p-6 shadow-lg border border-blue-100 dark:border-gray-700">
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mb-4">
+          <i class="fas fa-chart-area text-white text-lg"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">Grafik Real-Time</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Visualisasi intensitas UV dan akumulasi dosis vs batas MED secara langsung.</p>
+      </div>
+      <div class="bg-white/70 dark:bg-gray-800/70 glass rounded-3xl p-6 shadow-lg border border-green-100 dark:border-gray-700">
+        <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mb-4">
+          <i class="fas fa-dna text-white text-lg"></i>
+        </div>
+        <h3 class="font-bold text-lg mb-2">Beer-Lambert</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Transmisi UV: I = I₀·e<sup>−k·x</sup> dengan k = ln(SPF). Hubungan eksponensial, bukan linear!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ABOUT ══ -->
+<section id="about" class="hidden min-h-screen py-8">
+  <div class="bg-white/70 dark:bg-gray-800/70 glass rounded-3xl p-8 md:p-12 shadow-2xl">
+    <h2 class="text-4xl font-black mb-10 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      Apa Itu Sunscreen?
+    </h2>
+    <div class="grid md:grid-cols-2 gap-10 items-start">
+      <div class="space-y-5">
+        <div class="flex items-start space-x-4 p-5 bg-yellow-50 dark:bg-gray-700/80 rounded-2xl border border-yellow-100 dark:border-gray-600">
+          <i class="fas fa-bolt text-yellow-500 text-2xl mt-1 flex-shrink-0"></i>
+          <div>
+            <h4 class="font-bold text-lg mb-2">Pengertian</h4>
+            <p class="text-justify text-sm text-gray-600 dark:text-gray-300">Sunscreen (tabir surya) adalah produk perawatan kulit berbentuk krim, gel, atau spray yang dirancang untuk melindungi kulit dari radiasi sinar ultraviolet (UV) matahari. Sinar UV terbagi menjadi UVA (penuaan kulit) dan UVB (penyebab sunburn).</p>
+          </div>
+        </div>
+        <div class="flex items-start space-x-4 p-5 bg-blue-50 dark:bg-gray-700/80 rounded-2xl border border-blue-100 dark:border-gray-600">
+          <i class="fas fa-flask text-blue-500 text-2xl mt-1 flex-shrink-0"></i>
+          <div>
+            <h4 class="font-bold text-lg mb-2">Physical vs Chemical</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-2"><strong class="text-blue-600">Physical</strong> — memantulkan UV dengan zinc oxide/titanium dioxide. Langsung aktif, cocok kulit sensitif, tapi sering white cast.</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300"><strong class="text-orange-600">Chemical</strong> — menyerap UV lalu mengubahnya jadi panas. Tekstur ringan, tanpa white cast, butuh 15–20 menit sebelum aktif.</p>
+          </div>
+        </div>
+        <div class="flex items-start space-x-4 p-5 bg-green-50 dark:bg-gray-700/80 rounded-2xl border border-green-100 dark:border-gray-600">
+          <i class="fas fa-brain text-green-500 text-2xl mt-1 flex-shrink-0"></i>
+          <div>
+            <h4 class="font-bold text-lg mb-2">MED (Minimal Erythema Dose)</h4>
+            <p class="text-justify text-sm text-gray-600 dark:text-gray-300 mb-3">Dosis terendah sinar UV yang menyebabkan kemerahan (eritema) minimal pada kulit — standar pengukuran efektivitas SPF. Semakin tinggi SPF, semakin lama waktu mencapai MED.</p>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm">
+                <div class="text-sm font-bold text-green-600">6000</div>
+                <div class="text-xs text-gray-500">Terang</div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm">
+                <div class="text-sm font-bold text-yellow-600">3000</div>
+                <div class="text-xs text-gray-500">Sedang</div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm">
+                <div class="text-sm font-bold text-orange-600">1500</div>
+                <div class="text-xs text-gray-500">Gelap</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Math model card -->
+      <div class="w-full bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50 rounded-3xl shadow-2xl p-8 border-4 border-white/50 dark:border-gray-700/50">
+        <div class="text-center mb-6">
+          <div class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl shadow-xl font-mono text-sm tracking-wider">
+            <i class="fas fa-calculator mr-2"></i>MODEL MATEMATIKA
+          </div>
+        </div>
+        <div class="bg-white/80 dark:bg-black/30 p-5 rounded-2xl shadow-xl border-l-8 border-emerald-400 mb-5">
+          <div class="text-2xl font-mono mb-3 text-gray-800 dark:text-gray-100">D(t) = ∫<sub>0</sub><sup>T</sup> I₀(t) · e<sup>−k·x</sup> dt</div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 mt-3">
+            <div>I₀(t) = Intensitas Matahari</div>
+            <div>k = ln(SPF)</div>
+            <div>x = Ketebalan (mg/cm²)</div>
+            <div>T = Durasi Paparan</div>
+          </div>
+        </div>
+        <div class="text-center text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">
+          Metode <span class="text-yellow-600 dark:text-yellow-400">Trapesium</span> Komposit
+        </div>
+        <div class="bg-white/60 dark:bg-black/20 p-4 rounded-2xl font-mono text-sm text-gray-700 dark:text-gray-300 text-center mb-4">
+          D ≈ Σ [(f(tᵢ)+f(tᵢ₊₁))/2 · Δt]
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-white/70 dark:bg-gray-800/70 p-3 rounded-xl text-center">
+            <div class="font-bold text-orange-600">SPF 30</div>
+            <div class="text-xs text-gray-500">k = 3.401</div>
+          </div>
+          <div class="bg-white/70 dark:bg-gray-800/70 p-3 rounded-xl text-center">
+            <div class="font-bold text-red-600">SPF 50</div>
+            <div class="text-xs text-gray-500">k = 3.912</div>
+          </div>
+          <div class="bg-white/70 dark:bg-gray-800/70 p-3 rounded-xl text-center">
+            <div class="font-bold text-purple-600">SPF 100</div>
+            <div class="text-xs text-gray-500">k = 4.605</div>
+          </div>
+          <div class="bg-white/70 dark:bg-gray-800/70 p-3 rounded-xl text-center">
+            <div class="font-bold text-green-600">x = 2</div>
+            <div class="text-xs text-gray-500">mg/cm² ✓ Standar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SPF ══ -->
+<section id="spf" class="hidden min-h-screen py-8">
+  <div class="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-3xl p-8 md:p-12">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-black bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4">
+        Rahasia di Balik Angka SPF
+      </h2>
+      <p class="text-xl text-gray-600 dark:text-gray-300">SPF bukan "pelindung total" — tapi faktor matematis eksponensial!</p>
+    </div>
+    <div class="grid lg:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-7 shadow-xl glass">
+        <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mx-auto mb-5 flex items-center justify-center">
+          <i class="fas fa-calculator text-xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-3 text-center">Formula Beer-Lambert</h3>
+        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-xl font-mono text-sm text-center mb-3">I = I₀ · e<sup>−k·x</sup></div>
+        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-xl font-mono text-sm text-center">k = ln(SPF)</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-7 shadow-xl glass">
+        <div class="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl mx-auto mb-5 flex items-center justify-center">
+          <i class="fas fa-chart-line text-xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-3 text-center">Koefisien k per SPF</h3>
+        <table class="w-full text-sm text-center">
+          <tr class="border-b border-gray-200 dark:border-gray-700"><td class="py-2 text-gray-500">SPF 15</td><td class="font-mono font-bold">k = 2.708</td><td class="text-xs text-gray-400">6.7% lolos</td></tr>
+          <tr class="border-b border-gray-200 dark:border-gray-700"><td class="py-2 text-gray-500">SPF 30</td><td class="font-mono font-bold">k = 3.401</td><td class="text-xs text-gray-400">3.3% lolos</td></tr>
+          <tr class="border-b border-gray-200 dark:border-gray-700"><td class="py-2 font-bold">SPF 50</td><td class="font-mono font-bold text-orange-500">k = 3.912</td><td class="text-xs text-gray-400">2.0% lolos</td></tr>
+          <tr><td class="py-2 text-gray-500">SPF 100</td><td class="font-mono font-bold">k = 4.605</td><td class="text-xs text-gray-400">1.0% lolos</td></tr>
+        </table>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-3xl p-7 shadow-xl glass">
+        <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl mx-auto mb-5 flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle text-xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-3 text-center">Mitos vs Fakta</h3>
+        <div class="space-y-2">
+          <div class="p-2.5 bg-red-50 dark:bg-red-900/30 rounded-xl text-sm text-red-600 dark:text-red-400">✗ SPF 50 = 50× lebih aman</div>
+          <div class="p-2.5 bg-red-50 dark:bg-red-900/30 rounded-xl text-sm text-red-600 dark:text-red-400">✗ SPF 100 = perlindungan 100%</div>
+          <div class="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl text-sm text-green-600 dark:text-green-400">✓ SPF 50 vs 30 hanya beda 1.33%</div>
+          <div class="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl text-sm text-green-600 dark:text-green-400">✓ Reapply tiap 2 jam — wajib!</div>
+        </div>
+      </div>
+    </div>
+    <!-- Thickness effect -->
+    <div class="bg-white/80 dark:bg-gray-800/80 rounded-3xl p-7 shadow-xl glass">
+      <h3 class="text-xl font-bold mb-5 text-center text-indigo-600 dark:text-indigo-400">Efek Ketebalan Lapisan Sunscreen (SPF 50, k = 3.912)</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm">
+        <div class="p-4 bg-red-100 dark:bg-red-900/30 rounded-2xl">
+          <div class="text-3xl font-black text-red-500 mb-1">23%</div>
+          <div class="text-gray-600 dark:text-gray-300 font-medium">x = 0.5 mg/cm²</div>
+          <div class="text-xs text-red-400 mt-1">Sangat tipis</div>
+        </div>
+        <div class="p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl">
+          <div class="text-3xl font-black text-yellow-500 mb-1">68%</div>
+          <div class="text-gray-600 dark:text-gray-300 font-medium">x = 1.0 mg/cm²</div>
+          <div class="text-xs text-yellow-500 mt-1">Di bawah standar</div>
+        </div>
+        <div class="p-4 bg-green-100 dark:bg-green-900/30 rounded-2xl border-2 border-green-400">
+          <div class="text-3xl font-black text-green-600 mb-1">98%</div>
+          <div class="text-gray-600 dark:text-gray-300 font-medium">x = 2.0 mg/cm²</div>
+          <div class="text-xs text-green-600 font-bold mt-1">✓ Standar WHO</div>
+        </div>
+        <div class="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-2xl">
+          <div class="text-3xl font-black text-blue-500 mb-1">99.9%</div>
+          <div class="text-gray-600 dark:text-gray-300 font-medium">x = 4.0 mg/cm²</div>
+          <div class="text-xs text-blue-400 mt-1">Sangat tebal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SIMULATOR ══ -->
+<section id="simulator" class="hidden py-8">
+  <div class="text-center mb-10">
+    <h2 class="text-4xl md:text-5xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+      🧮 Kalkulus Integral Simulator
+    </h2>
+    <p class="text-xl text-gray-600 dark:text-gray-300">Hitung dosis UV menggunakan <strong class="text-emerald-600">Metode Trapesium Komposit</strong></p>
+  </div>
+
+  <!-- Skin type -->
+  <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl mb-6 max-w-2xl mx-auto">
+    <h3 class="text-lg font-bold mb-5 text-center text-gray-700 dark:text-gray-200">
+      <span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-full w-7 h-7 inline-flex items-center justify-center text-sm font-bold mr-2">1</span>
+      Pilih Tipe Kulitmu
+    </h3>
+    <div class="grid grid-cols-3 gap-4" id="skinGrid">
+      <button onclick="setSkin(this,'light')" class="skin-btn selected bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 p-5 rounded-2xl hover:shadow-lg text-center">
+        <div class="text-3xl mb-2">👩‍🦰</div>
+        <div class="font-bold text-sm">Terang</div>
+        <div class="text-xs text-gray-500 mt-1 font-mono">MED: 6000</div>
+      </button>
+      <button onclick="setSkin(this,'medium')" class="skin-btn bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 p-5 rounded-2xl hover:shadow-lg text-center">
+        <div class="text-3xl mb-2">👩‍🦳</div>
+        <div class="font-bold text-sm">Sedang</div>
+        <div class="text-xs text-gray-500 mt-1 font-mono">MED: 3000</div>
+      </button>
+      <button onclick="setSkin(this,'dark')" class="skin-btn bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 p-5 rounded-2xl hover:shadow-lg text-center">
+        <div class="text-3xl mb-2">👩🏿</div>
+        <div class="font-bold text-sm">Gelap</div>
+        <div class="text-xs text-gray-500 mt-1 font-mono">MED: 1500</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sunscreen + Exposure -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl">
+      <h3 class="text-lg font-bold mb-5 text-orange-600 dark:text-orange-400">
+        <span class="bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-full w-7 h-7 inline-flex items-center justify-center text-sm font-bold mr-2">2</span>
+        Pilih Sunscreen
+      </h3>
+      <div class="flex flex-wrap gap-2 mb-4" id="brandRow">
+        <button onclick="selectBrand(this,3.912,'Biore UV SPF50')" class="brand-btn selected text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">Biore UV SPF50</button>
+        <button onclick="selectBrand(this,4.6,'Anessa SPF50+')"    class="brand-btn text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">Anessa SPF50+</button>
+        <button onclick="selectBrand(this,3.401,'SPF 30')"         class="brand-btn text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">SPF 30</button>
+        <button onclick="selectBrand(this,2.708,'SPF 15')"         class="brand-btn text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">SPF 15</button>
+      </div>
+      <div class="flex gap-3 items-center mb-4">
+        <input type="number" id="spfManual" min="1" max="200" placeholder="Custom SPF..." class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-2xl text-sm bg-white dark:bg-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-orange-300 outline-none" oninput="manualSPF()">
+        <span class="text-xs text-gray-500 font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-xl whitespace-nowrap" id="kVal">k = 3.912</span>
+      </div>
+      <div class="text-center p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 rounded-2xl border border-orange-200 dark:border-orange-800">
+        <div class="text-xs text-gray-500 mb-1">Produk dipilih</div>
+        <div class="font-black text-orange-600 dark:text-orange-400 text-lg" id="brandLabel">Biore UV SPF50</div>
+      </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl">
+      <h3 class="text-lg font-bold mb-5 text-blue-600 dark:text-blue-400">
+        <span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full w-7 h-7 inline-flex items-center justify-center text-sm font-bold mr-2">3</span>
+        Paparan Matahari
+      </h3>
+      <div class="space-y-6">
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <label class="font-semibold flex items-center gap-2 text-gray-700 dark:text-gray-200 text-sm">
+              <i class="fas fa-clock text-blue-500"></i> Durasi paparan
+            </label>
+            <div class="flex items-center gap-1">
+              <span class="font-black text-blue-600 dark:text-blue-400 text-2xl font-mono" id="timeDisplay">60</span>
+              <span class="text-gray-500 text-sm">menit</span>
+            </div>
+          </div>
+          <input type="range" id="sliderTime" min="10" max="300" value="60" step="5" class="w-full" oninput="updateSim()">
+          <div class="flex justify-between text-xs text-gray-400 mt-1"><span>10 mnt</span><span>300 mnt</span></div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-3">
+            <label class="font-semibold flex items-center gap-2 text-gray-700 dark:text-gray-200 text-sm">
+              <i class="fas fa-layer-group text-green-500"></i> Ketebalan
+            </label>
+            <div class="flex items-center gap-1">
+              <span class="font-black text-green-600 dark:text-green-400 text-2xl font-mono" id="thickDisplay">2.0</span>
+              <span class="text-gray-500 text-sm">mg/cm²</span>
+            </div>
+          </div>
+          <input type="range" id="sliderThick" min="0.5" max="4" value="2" step="0.1" class="w-full" oninput="updateSim()">
+          <div class="flex justify-between text-xs text-gray-400 mt-1">
+            <span>0.5</span><span class="text-yellow-600 font-bold">2.0 (standar)</span><span>4.0</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 text-xs text-center text-gray-500 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-xl border border-yellow-200 dark:border-yellow-800">
+        <i class="fas fa-info-circle text-yellow-500 mr-1"></i>
+        Standar WHO: 2 mg/cm² · Aturan 2 Jari
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-2xl p-5 shadow-lg text-center border border-gray-100 dark:border-gray-700">
+      <div class="text-3xl font-black text-emerald-600 mb-1" id="metDose">0</div>
+      <div class="text-xs text-gray-500 uppercase tracking-wide">Dosis Kumulatif</div>
+      <div class="text-xs text-gray-400">(mJ/cm²)</div>
+    </div>
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-2xl p-5 shadow-lg text-center border border-gray-100 dark:border-gray-700">
+      <div class="text-3xl font-black text-red-500 mb-1" id="metMed">6000</div>
+      <div class="text-xs text-gray-500 uppercase tracking-wide">Batas MED</div>
+      <div class="text-xs text-gray-400">(mJ/cm²)</div>
+    </div>
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-2xl p-5 shadow-lg text-center border border-gray-100 dark:border-gray-700">
+      <div class="text-3xl font-black text-blue-600 mb-1" id="metEff">0%</div>
+      <div class="text-xs text-gray-500 uppercase tracking-wide">Efisiensi</div>
+      <div class="text-xs text-gray-400">sunscreen</div>
+    </div>
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-2xl p-5 shadow-lg text-center border border-gray-100 dark:border-gray-700">
+      <div class="text-3xl font-black text-orange-500 mb-1" id="metBurn">Aman!</div>
+      <div class="text-xs text-gray-500 uppercase tracking-wide">Waktu Sunburn</div>
+      <div class="text-xs text-gray-400">menit</div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-2xl p-5 shadow-lg mb-6">
+    <div class="flex justify-between items-center mb-3">
+      <span class="font-semibold text-gray-700 dark:text-gray-200 text-sm">Progres dosis menuju MED</span>
+      <span class="font-mono text-xs text-gray-500" id="progLabel">0 / 6000 mJ/cm²</span>
+    </div>
+    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+      <div id="progBar" class="prog-fill h-full rounded-full bg-green-500" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="statusBox" class="rounded-2xl p-6 font-bold text-xl text-center shadow-lg mb-6 flex items-center justify-center gap-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+    <span id="statusIcon" class="text-2xl">✅</span>
+    <span id="statusText">Simulasi siap — atur parameter di atas</span>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl">
+      <h3 class="font-bold text-lg mb-1 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+        <i class="fas fa-chart-area text-purple-500"></i> Intensitas UV per Waktu
+      </h3>
+      <p class="text-xs text-gray-400 mb-4">I(t) = I₀(t) · e<sup>−k·x</sup> — luas area di bawah kurva = total dosis</p>
+      <div class="flex flex-wrap gap-3 mb-4 text-xs text-gray-500 dark:text-gray-400">
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#ef4444"></span>Tanpa sunscreen</span>
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#3b82f6"></span>Sunscreenmu</span>
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#10b981"></span>Standar 2mg/cm²</span>
+      </div>
+      <div style="position:relative;height:240px">
+        <canvas id="chartIntensity" role="img" aria-label="Grafik intensitas UV per waktu">Grafik intensitas UV per waktu.</canvas>
+      </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl">
+      <h3 class="font-bold text-lg mb-1 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+        <i class="fas fa-chart-line text-orange-500"></i> Akumulasi Dosis vs MED
+      </h3>
+      <p class="text-xs text-gray-400 mb-4">Kurva menyentuh garis oranye (MED) → kulit mulai eritema</p>
+      <div class="flex flex-wrap gap-3 mb-4 text-xs text-gray-500 dark:text-gray-400">
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#f97316"></span>Batas MED</span>
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#ef4444"></span>Tanpa sunscreen</span>
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#3b82f6"></span>Sunscreenmu</span>
+        <span><span class="inline-block w-3 h-3 rounded-sm mr-1" style="background:#10b981"></span>Standar 2mg/cm²</span>
+      </div>
+      <div style="position:relative;height:240px">
+        <canvas id="chartAccum" role="img" aria-label="Grafik akumulasi dosis UV vs batas MED">Grafik akumulasi dosis UV vs batas MED.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trapesium detail -->
+  <div class="bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-xl">
+    <h3 class="font-bold text-lg mb-1 flex items-center gap-2 text-gray-800 dark:text-gray-100">
+      <i class="fas fa-superscript text-indigo-500"></i> Detail Perhitungan Trapesium Komposit
+    </h3>
+    <p class="text-xs text-gray-400 mb-5">Menghitung D(T) = Σ [(f(tᵢ) + f(tᵢ₊₁)) / 2 · Δt] — setiap baris = satu sub-interval trapesium</p>
+
+    <!-- Parameter summary -->
+    <div id="trapParams" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Formula header -->
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-4 mb-4 font-mono text-sm text-center text-indigo-700 dark:text-indigo-300">
+      D ≈ <span class="text-purple-600 dark:text-purple-400">Σ</span>
+      &nbsp;[(&nbsp;f(tᵢ)&nbsp;+&nbsp;f(tᵢ₊₁)&nbsp;) / 2&nbsp;]&nbsp;×&nbsp;Δt
+      <span class="ml-3 text-xs text-gray-400">where f(t) = I₀(t) · e<sup>−k·x</sup></span>
+    </div>
+
+    <!-- Table -->
+    <div id="trapDetail" class="bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="trap-scroll">
+        <table>
+          <thead class="bg-indigo-600 text-white">
+            <tr>
+              <th class="text-left">Sub-interval</th>
+              <th class="text-right">tᵢ (mnt)</th>
+              <th class="text-right">tᵢ₊₁ (mnt)</th>
+              <th class="text-right">f(tᵢ) <span class="font-normal opacity-70">mW/cm²</span></th>
+              <th class="text-right">f(tᵢ₊₁) <span class="font-normal opacity-70">mW/cm²</span></th>
+              <th class="text-right">rata-rata</th>
+              <th class="text-right">× Δt</th>
+              <th class="text-right font-bold">kontribusi</th>
+            </tr>
+          </thead>
+          <tbody id="trapTbody">
+            <tr><td colspan="8" class="text-center text-gray-400 py-6">Menunggu simulasi…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Total summary bar -->
+    <div id="trapSummary" class="mt-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border border-emerald-200 dark:border-emerald-700 rounded-2xl p-4">
+      <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+        Tabel menampilkan <span id="trapSampleNote" class="font-bold text-indigo-600 dark:text-indigo-400">—</span> sampel interval dari total <span id="trapNTotal" class="font-bold">—</span> interval
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-600 dark:text-gray-300 font-mono">Total D(T) =</span>
+        <span id="trapFinalDose" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">—</span>
+        <span class="text-xs text-gray-500">mJ/cm²</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TIPS ══ -->
+<section id="tips" class="hidden min-h-screen py-8">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-4xl font-black mb-10 text-center bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+      Tips Penggunaan yang Benar
+    </h2>
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl glass mb-6 flex flex-col md:flex-row gap-8 items-center">
+      <div class="w-28 h-28 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center flex-shrink-0 shadow-lg">
+        <i class="fas fa-hand-holding text-4xl text-white"></i>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold mb-3">Aturan 2 Jari</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">Standar klinis 2 mg/cm² untuk wajah setara dengan <strong>1 ruas jari</strong> untuk wajah + <strong>1 ruas</strong> untuk leher. Lebih sedikit dari itu, SPF yang kamu dapat jauh lebih rendah karena hubungannya <strong>eksponensial</strong>, bukan linear!</p>
+        <div class="grid grid-cols-3 gap-3 text-center text-sm">
+          <div class="bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-2xl">
+            <div class="text-xl font-bold text-yellow-700 dark:text-yellow-400">👆×2</div>
+            <div class="text-gray-500 text-xs mt-1">Wajah + Leher</div>
+          </div>
+          <div class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-2xl">
+            <div class="text-xl font-bold text-orange-600">~1 g</div>
+            <div class="text-gray-500 text-xs mt-1">Per aplikasi wajah</div>
+          </div>
+          <div class="bg-red-50 dark:bg-red-900/30 p-3 rounded-2xl">
+            <div class="text-xl font-bold text-red-600">~30 g</div>
+            <div class="text-gray-500 text-xs mt-1">Satu tubuh penuh</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 p-7 rounded-3xl shadow-xl glass">
+        <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i class="fas fa-clock text-pink-500"></i> Kapan Reapply?
+        </h4>
+        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <li class="flex items-start gap-2"><span class="text-pink-500 font-bold">•</span><span>Setiap <strong>2 jam</strong> — UV menembus awan hingga 80%</span></li>
+          <li class="flex items-start gap-2"><span class="text-pink-500 font-bold">•</span><span>Setelah <strong>berenang</strong> atau berkeringat berlebih</span></li>
+          <li class="flex items-start gap-2"><span class="text-pink-500 font-bold">•</span><span>Setelah mengeringkan kulit dengan <strong>handuk</strong></span></li>
+          <li class="flex items-start gap-2"><span class="text-pink-500 font-bold">•</span><span>Gunakan SPF 50+ untuk aktivitas <strong>outdoor/pantai</strong></span></li>
+        </ul>
+      </div>
+      <div class="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-7 rounded-3xl shadow-xl glass">
+        <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i class="fas fa-search text-purple-500"></i> Baca Label
+        </h4>
+        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <li class="flex items-start gap-2"><span class="text-purple-500 font-bold">•</span><span><strong>Broad Spectrum</strong> — perlindungan UVA + UVB</span></li>
+          <li class="flex items-start gap-2"><span class="text-purple-500 font-bold">•</span><span><strong>PA++++</strong> — perlindungan UVA terbaik</span></li>
+          <li class="flex items-start gap-2"><span class="text-purple-500 font-bold">•</span><span><strong>Water Resistant</strong> — untuk olahraga / pantai</span></li>
+          <li class="flex items-start gap-2"><span class="text-purple-500 font-bold">•</span><span><strong>Non-comedogenic</strong> — untuk kulit berjerawat</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /max-w-6xl -->
+
+<!-- FOOTER -->
+<footer class="mt-20 py-10 px-6 glass bg-white/50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+  <div class="max-w-6xl mx-auto text-center">
+    <p class="text-lg mb-2 text-gray-600 dark:text-gray-300">Projek UAS Kalkulus Integral · Metode Trapesium untuk Integral Dosis UV</p>
+    <p class="text-gray-400 text-sm">© 2026 — Muhammad Kahfi <i class="fas fa-calculator text-orange-500 mx-1"></i> Mathematics</p>
+  </div>
+</footer>
+
+<script>
+  /* ── DARK MODE ── */
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    if (!isDark) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }
+
+  /* ── NAV ── */
+  // Map section id → nav button index (desktop buttons order)
+  const NAV_MAP = { home:0, about:1, spf:2, simulator:3, tips:4 };
+
+  function showSection(id) {
+    // Hide all
+    document.querySelectorAll('main > div > section, .max-w-6xl > section').forEach(s => s.classList.add('hidden'));
+    const target = document.getElementById(id);
+    if (target) { target.classList.remove('hidden'); }
+
+    // Update desktop nav
+    const desktopBtns = document.querySelectorAll('.hidden.md\\:flex .nav-link');
+    desktopBtns.forEach(b => b.classList.remove('active'));
+    if (desktopBtns[NAV_MAP[id]] !== undefined) desktopBtns[NAV_MAP[id]].classList.add('active');
+
+    // Update mobile nav
+    const mobileBtns = document.querySelectorAll('.mobile-nav .nav-link');
+    mobileBtns.forEach(b => b.classList.remove('active'));
+    if (mobileBtns[NAV_MAP[id]] !== undefined) mobileBtns[NAV_MAP[id]].classList.add('active');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ── STATE ── */
+  let MED = 6000;
+  let K   = 3.912;
+  const skinMED = { light: 6000, medium: 3000, dark: 1500 };
+
+  /* ── SKIN ── */
+  function setSkin(btn, skin) {
+    document.querySelectorAll('#skinGrid .skin-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    MED = skinMED[skin];
+    document.getElementById('metMed').textContent = MED.toLocaleString();
+    updateSim();
+  }
+
+  /* ── BRAND ── */
+  function selectBrand(btn, k, name) {
+    document.querySelectorAll('#brandRow .brand-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    K = k;
+    document.getElementById('kVal').textContent = 'k = ' + k.toFixed(3);
+    document.getElementById('brandLabel').textContent = name;
+    document.getElementById('spfManual').value = '';
+    updateSim();
+  }
+
+  function manualSPF() {
+    const spf = parseFloat(document.getElementById('spfManual').value);
+    if (!spf || spf < 1) return;
+    K = Math.log(spf);
+    document.getElementById('kVal').textContent = 'k = ' + K.toFixed(3);
+    document.getElementById('brandLabel').textContent = 'SPF ' + spf + ' (custom)';
+    document.querySelectorAll('#brandRow .brand-btn').forEach(b => b.classList.remove('selected'));
+    updateSim();
+  }
+
+  /* ── PHYSICS ── */
+  function I0(t, T) { return Math.max(0, 80 * Math.sin(Math.PI * t / T)); }
+  function Ithrough(t, T, k, x) { return I0(t, T) * Math.exp(-k * x); }
+
+  /* ── CHARTS ── */
+  let chartI = null, chartA = null;
+
+  function buildCharts(labels, i0arr, icArr, i2arr, accNo, accC, acc2, medLine) {
+    const gridColor = 'rgba(0,0,0,0.05)';
+
+    if (!chartI) {
+      chartI = new Chart(document.getElementById('chartIntensity').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { data: i0arr, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.08)',   fill:true, pointRadius:0, borderWidth:2, tension:0.35 },
+          { data: icArr, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.12)',  fill:true, pointRadius:0, borderWidth:2.5, tension:0.35 },
+          { data: i2arr, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.07)',  fill:true, pointRadius:0, borderWidth:2, tension:0.35, borderDash:[6,3] }
+        ]},
+        options: {
+          responsive:true, maintainAspectRatio:false, animation:{duration:200},
+          plugins:{ legend:{display:false} },
+          scales:{
+            x:{ title:{display:true,text:'Waktu (menit)',font:{size:11}}, ticks:{maxTicksLimit:10,font:{size:11}}, grid:{color:gridColor} },
+            y:{ title:{display:true,text:'Intensitas (mW/cm²)',font:{size:11}}, beginAtZero:true, ticks:{font:{size:11}}, grid:{color:gridColor} }
+          }
+        }
+      });
+    } else {
+      chartI.data.labels = labels;
+      chartI.data.datasets[0].data = i0arr;
+      chartI.data.datasets[1].data = icArr;
+      chartI.data.datasets[2].data = i2arr;
+      chartI.update('none');
+    }
+
+    if (!chartA) {
+      chartA = new Chart(document.getElementById('chartAccum').getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { data: medLine, borderColor:'#f97316', borderDash:[8,4], pointRadius:0, borderWidth:2.5, fill:false },
+          { data: accNo,   borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.07)',   fill:true, pointRadius:0, borderWidth:2, tension:0.1 },
+          { data: accC,    borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,.13)', fill:true, pointRadius:0, borderWidth:2.5, tension:0.1 },
+          { data: acc2,    borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.07)', fill:true, pointRadius:0, borderWidth:2, tension:0.1, borderDash:[4,3] }
+        ]},
+        options: {
+          responsive:true, maintainAspectRatio:false, animation:{duration:200},
+          plugins:{ legend:{display:false} },
+          scales:{
+            x:{ title:{display:true,text:'Waktu (menit)',font:{size:11}}, ticks:{maxTicksLimit:10,font:{size:11}}, grid:{color:gridColor} },
+            y:{ title:{display:true,text:'Dosis kumulatif (mJ/cm²)',font:{size:11}}, beginAtZero:true, ticks:{font:{size:11}}, grid:{color:gridColor} }
+          }
+        }
+      });
+    } else {
+      chartA.data.labels = labels;
+      chartA.data.datasets[0].data = medLine;
+      chartA.data.datasets[1].data = accNo;
+      chartA.data.datasets[2].data = accC;
+      chartA.data.datasets[3].data = acc2;
+      chartA.update('none');
+    }
+  }
+
+  /* ── MAIN UPDATE ── */
+  function updateSim() {
+    const T = parseInt(document.getElementById('sliderTime').value);
+    const x = parseFloat(document.getElementById('sliderThick').value);
+    document.getElementById('timeDisplay').textContent  = T;
+    document.getElementById('thickDisplay').textContent = x.toFixed(1);
+
+    const steps = Math.min(T, 150);
+    const dt    = T / steps;
+    const ts    = Array.from({ length: steps + 1 }, (_, i) => i * dt);
+
+    const i0arr = ts.map(t => I0(t, T));
+    const icArr = ts.map(t => Ithrough(t, T, K, x));
+    const i2arr = ts.map(t => Ithrough(t, T, 3.912, 2));
+
+    // Composite trapezoid rule
+    const accNo = [0], accC = [0], acc2 = [0];
+    for (let i = 0; i < steps; i++) {
+      accNo.push(accNo[i] + (i0arr[i] + i0arr[i+1]) / 2 * dt);
+      accC.push (accC[i]  + (icArr[i] + icArr[i+1]) / 2 * dt);
+      acc2.push (acc2[i]  + (i2arr[i] + i2arr[i+1]) / 2 * dt);
+    }
+
+    const finalDose = accC[accC.length - 1];
+    const finalNo   = accNo[accNo.length - 1];
+    const eff = Math.max(0, Math.round((1 - finalDose / finalNo) * 100));
+
+    let burnMin = null;
+    for (let i = 0; i < accC.length; i++) {
+      if (accC[i] >= MED) { burnMin = Math.round(ts[i]); break; }
+    }
+
+    // Metrics
+    document.getElementById('metDose').textContent = Math.round(finalDose).toLocaleString();
+    document.getElementById('metMed').textContent  = MED.toLocaleString();
+    document.getElementById('metEff').textContent  = eff + '%';
+    document.getElementById('metBurn').textContent = burnMin != null ? burnMin + ' mnt' : 'Aman!';
+
+    // Progress bar
+    const ratio = Math.min(1, finalDose / MED);
+    const pct   = Math.round(ratio * 100);
+    document.getElementById('progBar').style.width      = pct + '%';
+    document.getElementById('progBar').style.background = ratio < 0.5 ? '#10b981' : ratio < 1 ? '#f59e0b' : '#ef4444';
+    document.getElementById('progLabel').textContent    = Math.round(finalDose).toLocaleString() + ' / ' + MED.toLocaleString() + ' mJ/cm²';
+
+    // Status
+    const sb   = document.getElementById('statusBox');
+    const icon = document.getElementById('statusIcon');
+    const text = document.getElementById('statusText');
+    const baseClass = 'rounded-2xl p-6 font-bold text-xl text-center shadow-lg mb-6 flex items-center justify-center gap-3 border ';
+    if (ratio < 0.5) {
+      sb.className = baseClass + 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700';
+      icon.textContent = '✅';
+      text.textContent = 'Sangat Aman! Dosis UV ' + pct + '% dari MED — Efisiensi sunscreen ' + eff + '%';
+    } else if (ratio < 1) {
+      sb.className = baseClass + 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700';
+      icon.textContent = '⚠️';
+      text.textContent = 'Waspada! Dosis sudah ' + pct + '% dari MED — segera pertimbangkan reapply!';
+    } else {
+      sb.className = baseClass + 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700';
+      icon.textContent = '🔥';
+      text.textContent = 'Terbakar pada menit ke-' + (burnMin ?? '?') + '! Dosis melampaui MED — cari naungan segera!';
+    }
+
+    // Charts
+    const labels  = ts.map(t => Math.round(t));
+    const medLine = ts.map(() => MED);
+    buildCharts(labels, i0arr, icArr, i2arr, accNo, accC, acc2, medLine);
+
+    // ── Trapesium Parameter Cards ──
+    const paramCards = [
+      { label: 'Δt (interval)', value: dt.toFixed(3) + ' mnt',    color: 'indigo' },
+      { label: 'n (sub-interval)', value: steps.toLocaleString(), color: 'purple' },
+      { label: 'x (ketebalan)',   value: x.toFixed(1) + ' mg/cm²', color: 'blue'   },
+      { label: 'k (koef. atenuasi)', value: K.toFixed(4),          color: 'orange' },
+    ];
+    const colorMap = {
+      indigo: 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300',
+      purple: 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300',
+      blue:   'bg-blue-50  dark:bg-blue-900/30   border-blue-200   dark:border-blue-700   text-blue-700   dark:text-blue-300',
+      orange: 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300',
+    };
+    document.getElementById('trapParams').innerHTML = paramCards.map(c => `
+      <div class="border rounded-xl p-3 text-center ${colorMap[c.color]}">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${c.label}</div>
+        <div class="font-black font-mono text-lg">${c.value}</div>
+      </div>`).join('');
+
+    // ── Trapesium Table Rows ──
+    const MAX_ROWS = 12;
+    const sampleEvery = Math.max(1, Math.floor(steps / MAX_ROWS));
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    let cumulative = 0;
+    let rows = '';
+    let shownCount = 0;
+
+    for (let i = 0; i < steps; i += sampleEvery) {
+      const fi    = icArr[i];
+      const fi1   = icArr[i + 1];
+      const avg   = (fi + fi1) / 2;
+      const contr = avg * dt;
+      cumulative += contr;
+      shownCount++;
+
+      const rowBg = shownCount % 2 === 0
+        ? 'bg-gray-100/80 dark:bg-gray-800/60'
+        : 'bg-white dark:bg-gray-900/30';
+      const contrColor = contr > 0.5 ? 'text-red-500 dark:text-red-400' : contr > 0.1 ? 'text-yellow-600 dark:text-yellow-400' : 'text-emerald-600 dark:text-emerald-400';
+
+      rows += `<tr>
+        <td class="${rowBg} text-indigo-600 dark:text-indigo-400 font-bold">#${(i/sampleEvery+1).toString().padStart(2,'0')}</td>
+        <td class="${rowBg} text-right text-gray-600 dark:text-gray-300">${ts[i].toFixed(1)}</td>
+        <td class="${rowBg} text-right text-gray-600 dark:text-gray-300">${ts[i+1].toFixed(1)}</td>
+        <td class="${rowBg} text-right text-blue-600 dark:text-blue-300">${fi.toFixed(4)}</td>
+        <td class="${rowBg} text-right text-blue-600 dark:text-blue-300">${fi1.toFixed(4)}</td>
+        <td class="${rowBg} text-right text-purple-600 dark:text-purple-300">${avg.toFixed(4)}</td>
+        <td class="${rowBg} text-right text-gray-500">${dt.toFixed(3)}</td>
+        <td class="${rowBg} text-right font-bold ${contrColor}">${contr.toFixed(4)}</td>
+      </tr>`;
+    }
+
+    // Ellipsis row if not all shown
+    if (shownCount < steps) {
+      rows += `<tr>
+        <td colspan="8" class="text-center text-xs text-gray-400 dark:text-gray-500 py-2 italic bg-gray-50 dark:bg-gray-900/20">
+          · · · ${(steps - shownCount).toLocaleString()} interval lainnya tidak ditampilkan (dihitung semua) · · ·
+        </td>
+      </tr>`;
+    }
+
+    document.getElementById('trapTbody').innerHTML = rows;
+    document.getElementById('trapSampleNote').textContent = shownCount;
+    document.getElementById('trapNTotal').textContent     = steps.toLocaleString();
+    document.getElementById('trapFinalDose').textContent  = Math.round(finalDose).toLocaleString();
+  }
+
+  /* ── INIT ── */
+  // Show all sections to query them correctly
+  document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('home').classList.remove('hidden');
+  updateSim();
+</script>
+</body>
+</html>
